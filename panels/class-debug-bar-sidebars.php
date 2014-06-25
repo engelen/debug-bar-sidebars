@@ -1,15 +1,33 @@
 <?php
+/**
+ * Debug bar panel for sidebars and widgets
+ *
+ * @since 1.0
+ */
 class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 
 	public $sidebars = array();
 
+	/**
+	 * @see Debug_Bar_Panel::init()
+	 * @since 1.0
+	 */
 	public function init() {
+		// Set title shown in tab
 		$this->title( __( 'Sidebars', 'dbsw' ) );
 
+		// Hooks
 		add_action( 'dynamic_sidebar_before', array( $this, 'add_sidebar' ), 10, 2 );
 		add_action( 'dynamic_sidebar', array( $this, 'add_widget' ) );
 	}
 
+	/**
+	 * Add a sidebar to the list of sidebars displayed on this page
+	 * Should be called on dynamic_sidebar_before
+	 *
+	 * @see action:dynamic_sidebar_before
+	 * @since 1.0
+	 */
 	public function add_sidebar( $index, $has_widgets ) {
 		global $wp_registered_sidebars;
 
@@ -20,29 +38,49 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 		);
 	}
 
+	/**
+	 * Add a sidebar to the list of widgets displayed on this page for the current sidebar
+	 * Should be called on dynamic_sidebar
+	 *
+	 * @see action:dynamic_sidebar
+	 * @since 1.0
+	 */
 	public function add_widget( $widget ) {
 		$current_sidebar = count( $this->sidebars ) - 1 ;
 
 		$this->sidebars[ $current_sidebar ]->widgets[] = $widget;
 	}
 
+	/**
+	 * @see Debug_Bar_Panel::prerender()
+	 * @since 1.0
+	 */
 	public function prerender() {
 		$this->set_visible( ! is_admin() );
 	}
 
+	/**
+	 * @see Debug_Bar_Panel::render()
+	 * @since 1.0
+	 */
 	public function render() {
 		global $wp_registered_sidebars, $wp_registered_widgets;
 
+		// Content Aware Sidebars (CAS) integration
 		$cas_enabled = false;
 
 		if ( class_exists( 'ContentAwareSidebars' ) ) {
 			$cas_enabled = true;
 			$cas_sidebars = array();
+
+			// Fetch all sidebars from CAS
 			$cas_sidebars_raw = ContentAwareSidebars::instance()->get_sidebars();
 
 			if ( $cas_sidebars_raw ) {
 				foreach ( $cas_sidebars_raw as $cas_sidebar ) {
 					$id = ContentAwareSidebars::SIDEBAR_PREFIX . $cas_sidebar->ID;
+
+					// Get sidebar the CAS sidebar is set to replace (or merge into)
 					$host = get_post_meta( $cas_sidebar->ID, ContentAwareSidebars::PREFIX . 'host', true );
 
 					if ( ! isset( $cas_sidebars[ $host ] ) ) {
@@ -53,6 +91,7 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 				}
 			}
 
+			// Labels for the handles available in CAS
 			$handles = array(
 				0 => __( 'Replace', ContentAwareSidebars::DOMAIN ),
 				1 => __( 'Merge', ContentAwareSidebars::DOMAIN ),
@@ -66,6 +105,7 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 		foreach ( $this->sidebars as $sidebar ) {
 			echo '<h3>' . $wp_registered_sidebars[ $sidebar->index ]['name'] . ' <span>(' . $sidebar->index . ')</span></h3>';
 
+			// CAS integration
 			if ( $cas_enabled ) {
 				echo '<strong>' . __( 'Content Aware Sidebars enabled.', 'dbsw' ) . '</strong> ';
 
@@ -73,6 +113,7 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 					_e( 'No replacement sidebars found.', 'dbsw' );
 				}
 				else {
+					// Display replacement/merge sidebars
 					printf( __( '%d replacement sidebars found:', 'dbsw' ), count( $cas_sidebars[ $sidebar->index ] ) );
 
 					echo "<br/>\n";
@@ -88,11 +129,13 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 				echo "<br/>\n";
 			}
 
+			// Widgets for the current sidebar
 			if ( $sidebar->has_widgets ) {
 				$widgets = array();
 				$num_widgets_displayed = 0;
 
 				foreach ( $sidebar->widgets as $widget ) {
+					// Add widget and whether it could be displayed
 					$displayed = false;
 
 					if ( is_callable( $widget['callback'] ) ) {
@@ -106,11 +149,15 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 					);
 				}
 
+				// The number of available widgets might differ from the number of
+				// widgets actually displayed: only widgets with a valid callback
+				// are displayed, even though the ones without are counted in the total
 				echo '<p>' . sprintf( __( '%d widgets available; %d widgets displayed.', 'dbsw' ), count( $sidebar->widgets ), $num_widgets_displayed ) . '</p>';
 				
 				echo '<ol>';
 
 				foreach ( $widgets as $widget ) {
+					// Fetch widget title
 					$registered_widget = $wp_registered_widgets[ $widget->widget['id'] ];
 					$title = '';
 
@@ -122,9 +169,11 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 						}
 					}
 
+					// Display widget title
 					echo '<li>';
 					echo '<h4><strong>' . $widget->widget['name'] . '</strong>' . ( $title ? '<em>: ' . $title . '</em>' : '' ) . ' <span>(' . $widget->widget['id'] . ')</span></h4>';
 
+					// Display error if callback was invalid and the widget could therefore not be displayed
 					if ( ! $widget->displayed ) {
 						$callback = $widget->widget['callback'];
 
@@ -149,6 +198,7 @@ class DBSW_Debug_Bar_Sidebars extends Debug_Bar_Panel {
 				echo '</ol>';
 			}
 			else {
+				// Current sidebar has no widgets
 				echo '<p>' . __( 'No widgets available.', 'dbsw' ) . '</p>';
 			}
 		}
