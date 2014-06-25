@@ -2,10 +2,10 @@
 /*
 Plugin Name: Debug Bar - Sidebars & Widgets
 Version: 1.0
-Description: Debug Bar extension that adds information about the sidebars and widgets on the current page. Integrates with Content Aware Sidebars plugin
+Description: Debug Bar extension that adds information about the sidebars and widgets on the current page. Integrates with Content Aware Sidebars plugin.
 Author: Jesper van Engelen
 Author URI: http://jespervanengelen.com
-Text Domain: basa
+Text Domain: dbsw
 License: GPLv2
 
 Copyright 2014	Jesper van Engelen	contact@jepps.nl
