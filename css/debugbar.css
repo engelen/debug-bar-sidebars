@@ -1,0 +1,15 @@
+#querylist .dbsw-debug-bar-panel h3 {
+	float: none;
+	clear: both;
+	font-family: georgia, times, serif;
+	font-size: 22px;
+	margin: 15px 10px 5px 0;
+}
+
+#querylist .dbsw-debug-bar-panel h3 span {
+	font-size: 14px;
+}
+
+#querylist .dbsw-debug-bar-panel h4 span {
+	font-size: 11px;
+}
